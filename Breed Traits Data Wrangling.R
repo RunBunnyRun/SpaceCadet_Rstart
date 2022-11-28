@@ -1,8 +1,29 @@
 # install.packages("tidytuesdayR")
+#install.packages("dplyr")
+#install.packages("janitor)
+library(janitor)
 library(dplyr)
-tuesdata <- tidytuesdayR::tt_load("2022-02-01")
-breed_traits <- tuesdata$breed_traits
+#tuesdata <- tidytuesdayR::tt_load("2022-02-01")
+#saveRDS(tuesdata$breed_traits, "breed_traits.rds")
+breed_traits <- clean_names(readRDS("breed_traits.rds"))
+#breed_traits <- tuesdata$breed_traits
 select(breed_traits, "Breed")
+select(breed_traits, barking_level)
 select(breed_traits, "Coat Type")
 select(breed_traits, c(1, 3, 6))
-select(breed_traits, c("Breed", "Coat Length"))
+select(breed_traits, "Breed", "Coat Length")
+select(breed_traits, 1,2,6,7,8,9,10)
+select(breed_traits, 1,2,6:10)
+select(breed_traits, "Breed", "Affectionate With Family", "Drooling Level":"Openness To Strangers")
+select(breed_traits, breed, shedding_level, coat_grooming_frequency)
+#testing clean_names function on selecting columns and running filters
+filter(breed_traits, drooling_level == 5)
+filter(breed_traits, drooling_level == 5 & coat_length == "Short")
+filter(breed_traits, drooling_level == 5 | drooling_level == 3)
+filter(breed_traits, drooling_level %in% c(1,3,5))
+filter(breed_traits, drooling_level %in% c(3,4,5) & coat_length == "Short")
+#different ways to filter. Homework is to choose Dog Breeds that meet all 3 of:
+#Most affectionate with family (4,5)
+#Best with Young Children (4,5)
+#Best with Other Dogs (4,5)
+#Then save output to an object called "friendly_dogs"
