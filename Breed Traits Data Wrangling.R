@@ -22,8 +22,18 @@ filter(breed_traits, drooling_level == 5 & coat_length == "Short")
 filter(breed_traits, drooling_level == 5 | drooling_level == 3)
 filter(breed_traits, drooling_level %in% c(1,3,5))
 filter(breed_traits, drooling_level %in% c(3,4,5) & coat_length == "Short")
-#different ways to filter. Homework is to choose Dog Breeds that meet all 3 of:
+filter(breed_traits, drooling_level != 5)
+filter(breed_traits, !drooling_level %in% c(1,3,5))
+#different ways to filter, including a NOT operator (!). Homework is to choose Dog Breeds that meet all 3 of:
 #Most affectionate with family (4,5)
 #Best with Young Children (4,5)
 #Best with Other Dogs (4,5)
 #Then save output to an object called "friendly_dogs"
+#filter(breed_traits, affectionate_with_family == 4 | affectionate_with_family == 5)
+#filter(breed_traits, affectionate_with_family == 4 | affectionate_with_family == 5 & good_with_young_children == 4 | good_with_young_children == 5 & good_with_other_dogs == 4 | good_with_other_dogs == 5)
+#filter(breed_traits, affectionate_with_family %in% c(1,2,3) & good_with_young_children %in% c(1,2,3) & good_with_other_dogs %in% c(1,2,3))
+#filter(breed_traits, affectionate_with_family %in% c(1,2,3), good_with_young_children %in% c(1,2,3), good_with_other_dogs %in% c(1,2,3))
+filter(breed_traits, affectionate_with_family %in% c(4,5), good_with_young_children %in% c(4,5), good_with_other_dogs %in% c(4,5))
+#The above code seems to give me the correct list.
+friendly_dogs <- filter(breed_traits, affectionate_with_family %in% c(4,5), good_with_young_children %in% c(4,5), good_with_other_dogs %in% c(4,5))
+friendly_dogs
