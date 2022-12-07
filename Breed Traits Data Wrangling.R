@@ -99,5 +99,28 @@ dogs_that_drool <- breed_traits |>
   select(breed, drooling_level, drool_group) |>
   filter(drool_group == "Heavy") |>
   arrange(desc(breed))
+# Success
+
+breed_traits |>
+  mutate(trainability_category = case_when(
+    trainability_level <= 2 ~ "Not very trainable",
+    trainability_level == 3 ~ "Somewhat trainable",
+    trainability_level > 3 ~ "Very trainable"
+  )) |> 
+  group_by(trainability_category) |> 
+  summarise(
+    avg_energy_lvl = mean(energy_level),
+    count = n()
+    )
+# Testing group_by and summarise functions. Can use mean, median and sum here. n() returns no. of rows.
+
+breed_traits |>
+  mutate(trainability_category = case_when(
+    trainability_level <= 2 ~ "Not very trainable",
+    trainability_level == 3 ~ "Somewhat trainable",
+    trainability_level > 3 ~ "Very trainable")) |> 
+  count(trainability_category)
+# If you just want to count rows in each category.
+
 
 
