@@ -122,5 +122,60 @@ breed_traits |>
   count(trainability_category)
 # If you just want to count rows in each category.
 
+# Homework - Which coat type has the highest average (mean) coat grooming frequency?
+# Create a table of the dogs with the coat type identified above.
+# Do they all have similarly high coat-grooming frequency scores?
+# Which is the most common coat type?
+
+grooming_traits <- breed_traits |> 
+  select(breed, coat_grooming_frequency, coat_type, coat_length, shedding_level) |> 
+  arrange(desc(coat_grooming_frequency))
+  
+grooming_traits |>
+  mutate(groom_freq = case_when(
+    coat_grooming_frequency <= 2 ~ "Low",
+    coat_grooming_frequency == 3 ~ "Medium",
+    coat_grooming_frequency > 3 ~ "High"
+  )) 
+#|>   arrange(desc(groom_freq))
+# This adds a new column with the new category of groom_freq. Can also change order.
+
+# View(grooming_traits)
+
+high_avg_coat_groom <- grooming_traits |> 
+  select(breed, coat_grooming_frequency, coat_type) |> 
+  filter(coat_grooming_frequency %in% c(4,5)) |>
+  group_by(coat_type)
+ 
+high_avg_coat_groom
+# Trying to narrow down the info I need into a final table.
+
+coat_highest_groom <- high_avg_coat_groom |> 
+  select(breed, coat_grooming_frequency, coat_type) |> 
+  filter(coat_grooming_frequency %in% c(4,5)) |>
+  group_by(coat_type) |> 
+  count(coat_type) |> 
+  arrange(n)
+
+coat_highest_groom
+# Simple table showing the 'Double' coat type has the highest average coat grooming frequency.
+
+double_coat_dogs <- high_avg_coat_groom |> 
+  select(breed, coat_grooming_frequency, coat_type) |> 
+  filter(coat_type == "Double")
+ 
+double_coat_dogs
+# Table showing dogs with 'Double' coat type and their high (4or5) coat grooming frequency score.
+
+
+coat_type_totals <- grooming_traits |> 
+  select(breed, coat_grooming_frequency, coat_type, coat_length) |>
+  arrange(breed, coat_grooming_frequency, desc(coat_type)) |> 
+  count(coat_type)
+# Table that shows full count for all dogs based on coat type. Double and Smooth are both the highest at 66 dogs.
+
+
+
+
 
 
