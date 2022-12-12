@@ -4,6 +4,8 @@
 
 library(janitor)
 library(dplyr)
+library(tidytuesdayR)
+library(ggplot2)
 
 # tuesdata <- tidytuesdayR::tt_load("2022-02-01")
 # breed_traits <- tuesdata$breed_traits
@@ -12,6 +14,11 @@ library(dplyr)
 # saveRDS(tuesdata$breed_traits, "breed_traits.rds")
 
 breed_traits <- clean_names(readRDS("breed_traits.rds"))
+
+#tuesdata <- tidytuesdayR::tt_load("2022-02-01") |> 
+ # saveRDS("all_good_dogs.rds")
+all_dogs <- readRDS("all_good_dogs.rds")
+# Saving all 3 files of original data under new rds name.
 
 # select(breed_traits, "Breed")
 select(breed_traits, barking_level)
@@ -174,8 +181,87 @@ coat_type_totals <- grooming_traits |>
   count(coat_type)
 # Table that shows full count for all dogs based on coat type. Double and Smooth are both the highest at 66 dogs.
 
+# Lesson looking at joining different tables:
+# tuesdata <- tidytuesdayR::tt_load("2022-02-01") |> 
+  # saveRDS("all_good_dogs.rds")
+all_dogs <- readRDS("all_good_dogs.rds")
+all_dogs
+(breed_traits <- all_dogs$breed_traits |> 
+    clean_names())
+
+all_dogs
+(breed_ranks <- all_dogs$breed_rank |> 
+    clean_names())
+
+(traits_with_rank <- left_join(breed_traits, breed_ranks, by = "breed"))
+# line above works without but if you want to view in the console, wrap whole line in parenthesis.
+
+(breed_traits <- all_dogs$breed_traits |> 
+    clean_names() |> 
+  mutate(key = make_clean_names(breed)))
+# Clean names tidies up column headings, make clean names tidies up entire column contents.
+(breed_ranks <- all_dogs$breed_rank |> 
+    clean_names() |> 
+  mutate(key = make_clean_names(breed))) |> 
+  select(-breed)
+# You only need to have one breed column visible when comparing tables so deselect in breed ranks table.
+(traits_with_rank <- left_join(breed_traits, breed_ranks, by = "key"))
+
+(traits_with_rank |> 
+    filter(is.na(links)) |> 
+    nrow())
+# This is a way to check if there are any NA values in the row links. This gives us a count of 0.
+(traits_with_rank |> 
+    filter(is.na(x2013_rank)) |> 
+    nrow())
+# Running this with a different column to check, gives us a different answer as there are NA values in this column. Count = 19.
+
+(anti_join(breed_traits, breed_ranks, by = "key") |> 
+    nrow())
+# This checks whether there is a value in column key that doesn't match.
+
+# Homework: Create a new object - Family Friendly Dogs - subjective, you choose categories.
+# Of the least family friendly dogs, which was the highest ranked in 2020?
+# Of the top 20 ranked dogs in 2015, which are classified as least playful?
+# Did those same dogs rank differently in 2018?
+
+(breed_traits <- all_dogs$breed_traits |> 
+    clean_names() |> 
+    mutate(
+      key = make_clean_names(breed),
+      all_traits_score = rowSums(across(where(is.double)), na.rm = TRUE) |> round()
+      ) |> 
+    select(-breed))
+#The above is example code where the total score across all columns with numbers is added and total is in new column: all_traits_score.
+# Breed column has be deselected.
 
 
+(breed_traits <- all_dogs$breed_traits |> 
+    clean_names() |> 
+    mutate(
+      key = make_clean_names(breed),
+      all_traits_score = rowSums(across(where(is.double)), na.rm = TRUE),
+      negative_traits_score = rowSums(across(c(shedding_level:drooling_level, barking_level)), na.rm = TRUE),
+      weighted_score = all_traits_score - (2 * negative_traits_score)
+    ))
+ # Code above creates a few new columns based on named criteria. Sum for a final weighted score added.
 
+(breed_rank <- all_dogs$breed_rank|> 
+    clean_names() |> 
+    mutate(
+      key = make_clean_names(breed),
+      avg_rank = rowMeans(across(where(is.double)), na.rm = TRUE) |>  round()
+    ) |> 
+    select(-breed)
+  #Not sure why avg_rank not found. Come back to this.
+
+(traits_with_rank <- left_join(breed_traits, breed_ranks, by = "key"))
+# Displays table with newly added columns from both base tables.
+
+(traits_with_rank |> 
+    filter(weighted_score > 0) |> 
+    ggplot(aes(x = weighted_score, y = avg_rank)) +
+    geom_point() +
+    theme_minimal())
 
 
