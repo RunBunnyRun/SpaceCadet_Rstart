@@ -9,11 +9,17 @@ library(ggplot2)
 
 # tuesdata <- tidytuesdayR::tt_load("2022-02-01")
 # breed_traits <- tuesdata$breed_traits
+#trait_description <- tuesdata$trait_description
+# saveRDS(tuesdata$trait_description, "trait_description.rds")
+# breed_rank <- tuesdata$breed_rank
+# saveRDS(tuesdata$breed_rank, "breed_rank.rds")
 
 # breed_traits table saved to RDS file to work within limits:
 # saveRDS(tuesdata$breed_traits, "breed_traits.rds")
 
 breed_traits <- clean_names(readRDS("breed_traits.rds"))
+trait_description <- clean_names(readRDS("trait_description.rds"))
+breed_rank <- clean_names(readRDS("breed_rank.rds"))
 
 #tuesdata <- tidytuesdayR::tt_load("2022-02-01") |> 
  # saveRDS("all_good_dogs.rds")
@@ -183,13 +189,12 @@ coat_type_totals <- grooming_traits |>
 
 # Lesson looking at joining different tables:
 # tuesdata <- tidytuesdayR::tt_load("2022-02-01") |> 
-  # saveRDS("all_good_dogs.rds")
+ # saveRDS("all_good_dogs.rds")
 all_dogs <- readRDS("all_good_dogs.rds")
-all_dogs
+
 (breed_traits <- all_dogs$breed_traits |> 
     clean_names())
 
-all_dogs
 (breed_ranks <- all_dogs$breed_rank |> 
     clean_names())
 
@@ -202,8 +207,8 @@ all_dogs
 # Clean names tidies up column headings, make clean names tidies up entire column contents.
 (breed_ranks <- all_dogs$breed_rank |> 
     clean_names() |> 
-  mutate(key = make_clean_names(breed))) |> 
-  select(-breed)
+  mutate(key = make_clean_names(breed)) |> 
+  select(-breed))
 # You only need to have one breed column visible when comparing tables so deselect in breed ranks table.
 (traits_with_rank <- left_join(breed_traits, breed_ranks, by = "key"))
 
@@ -219,11 +224,6 @@ all_dogs
 (anti_join(breed_traits, breed_ranks, by = "key") |> 
     nrow())
 # This checks whether there is a value in column key that doesn't match.
-
-# Homework: Create a new object - Family Friendly Dogs - subjective, you choose categories.
-# Of the least family friendly dogs, which was the highest ranked in 2020?
-# Of the top 20 ranked dogs in 2015, which are classified as least playful?
-# Did those same dogs rank differently in 2018?
 
 (breed_traits <- all_dogs$breed_traits |> 
     clean_names() |> 
@@ -246,14 +246,14 @@ all_dogs
     ))
  # Code above creates a few new columns based on named criteria. Sum for a final weighted score added.
 
-(breed_rank <- all_dogs$breed_rank|> 
+(breed_ranks <- all_dogs$breed_rank |> 
     clean_names() |> 
     mutate(
       key = make_clean_names(breed),
-      avg_rank = rowMeans(across(where(is.double)), na.rm = TRUE) |>  round()
-    ) |> 
-    select(-breed)
-  #Not sure why avg_rank not found. Come back to this.
+      avg_rank = rowMeans(across(c(x2013_rank:x2020_rank))) |> 
+  round()) |> 
+  select(-breed))
+# Worked through many issues to get the above code to work. 
 
 (traits_with_rank <- left_join(breed_traits, breed_ranks, by = "key"))
 # Displays table with newly added columns from both base tables.
@@ -263,5 +263,76 @@ all_dogs
     ggplot(aes(x = weighted_score, y = avg_rank)) +
     geom_point() +
     theme_minimal())
+# Plotting a scatter plot chart to see if there is a clear pattern.
+
+# Homework: Create a new object - Family Friendly Dogs - subjective, you choose categories.
+# Of the least family friendly dogs, which was the highest ranked in 2020?
+# Of the top 20 ranked dogs in 2015, which are classified as least playful?
+# Did those same dogs rank differently in 2018?
+
+(good_traits <-  
+    select(breed_traits, c(1:4, 10:14)))
+# table with traits I consider good.
+(bad_traits <- 
+    select(breed_traits, c(1, 5:7)))
+# table with traits I consider bad.
+
+(good_dog_traits <- good_traits |> 
+    clean_names() |> 
+    mutate(
+      key = make_clean_names(breed),
+      avg_good_score = rowMeans(across(where(is.double)), na.rm = TRUE) |> round()
+    ))
+# Gives me new average column of my selected good traits and adding in as new column. Will do the same for bad traits:
+(bad_dog_traits <- bad_traits |> 
+    clean_names() |> 
+    mutate(
+      key = make_clean_names(breed),
+      avg_bad_score = rowMeans(across(where(is.double)), na.rm = TRUE) |> round()
+    ))
+
+(family_friendly_dogs <- left_join(good_dog_traits, bad_dog_traits, by = "key") |> 
+  select(-breed.y))
+# Joining the two tables.
+
+(top_family_dogs <- family_friendly_dogs |> 
+    mutate(
+      good = rowSums(across(c(2:9)), na.rm = TRUE),
+      bad = rowSums(across(c(shedding_level:drooling_level)), na.rm = TRUE),
+      weighted_friendly = good - (2 * bad)
+    ))
+# This table gives me my top family friendly dogs using a totally made up weighted formula.
+# American Hairless Terrier is best according to my criteria. Plott Hounds are least family friendly.
+
+(dog_ranks <- breed_rank |> 
+    clean_names() |> 
+    mutate(
+      key = make_clean_names(breed)) |> 
+    select(-breed))
+# Prepping breed_rank to join with new table. I keep making new objects as I'm unsure about the pipe function. Need to practise more.
+(ranked_family_dogs <- left_join(top_family_dogs, dog_ranks, by = "key"))
+# Successful join of tables with extra columns to determine homework answers.
+
+# Of the least family friendly dogs, which was the highest ranked in 2020?
+# Of the top 20 ranked dogs in 2015, which are classified as least playful?
+# Did those same dogs rank differently in 2018?
+
+(rankings <- ranked_family_dogs |>
+  mutate(dogrank = case_when(
+    weighted_friendly < 13 ~ "Low",
+    weighted_friendly > 21 ~ "High"
+  )) |> 
+  select(key, good, bad, weighted_friendly, dogrank, playfulness_level, x2013_rank:x2020_rank))
+# Table identifying the top and lowest weighted scores.
+
+# Highest ranked least family friendly dog in 2020 is Bulldogs.
+# Least playful highest ranked dog from 2015 is equal: Cavalier King Charles Spaniel and Shih Tzu.
+# These two dogs had the same playfulness score in 2018. CKCS was same at 18, ST went from rank 19 to 20.
+
+# Although I answered the questions in the end, this task was tricky and I need more focus time to streamline my code.
+# Need to use the pipe more and I didn't use R to give me the answer, rather just got the answers from the table I made.
+# Should have used the filter and arrange functions more. Need to practice these.
 
 
+
+ 
